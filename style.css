@@ -6,3 +6,120 @@ body {
 canvas {
     display: block;
 }
+
+#settingsButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px 15px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    font-size: 24px; /* Make icon larger */
+    padding: 8px 12px; /* Adjust padding for icon */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+#settingsButton i {
+    color: white; /* Ensure icon color is white */
+}
+
+#settingsPanel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: none; /* Remove transform to align to top-right */
+    background-color: rgba(0, 0, 0, 0.3); /* Slightly transparent black */
+    backdrop-filter: blur(10px); /* Glass effect */
+    -webkit-backdrop-filter: blur(10px); /* Safari support */
+    border-radius: 15px;
+    padding: 25px;
+    color: white;
+    width: 80%;
+    box-sizing: border-box; /* Ensure padding is included in the width */
+    max-width: 400px;
+    height: 100vh; /* Full height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    z-index: 1000;
+    transition: opacity 0.3s ease-in-out, right 0.3s ease-in-out; /* Add right transition */
+}
+
+#settingsPanel.hidden {
+    opacity: 0;
+    pointer-events: none;
+    right: -400px; /* Move off-screen when hidden */
+}
+
+#settingsPanel.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#settingsPanel h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.slider-group {
+    margin-bottom: 15px;
+}
+
+.slider-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: white;
+}
+
+.slider-group input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    outline: none;
+    opacity: 0.7;
+    transition: opacity .2s;
+}
+
+.slider-group input[type="range"]:hover {
+    opacity: 1;
+}
+
+.slider-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.slider-group input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+#closeSettings {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-top: 20px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}

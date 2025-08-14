@@ -11,6 +11,7 @@ const EDGE_LENGTH = config.forces.edgeLength;
 const REPULSION_STRENGTH = config.forces.repulsionStrength;
 const ATTRACTION_STRENGTH = config.forces.attractionStrength;
 const DAMPING_FACTOR = config.forces.dampingFactor;
+const MIN_FORCE_DISTANCE = config.forces.minForceDistance; // Get the new config value
 
 let scale = 1;
 let translateX = 0;
@@ -89,11 +90,12 @@ function calculateForces() {
             const dx = nodeB.x - nodeA.x;
             const dy = nodeB.y - nodeA.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
+            const effectiveDist = Math.max(dist, MIN_FORCE_DISTANCE); // Use effectiveDist to prevent extreme values
 
-            if (dist > 0) {
+            if (effectiveDist > 0) {
                 // Calculate graph distance (shortest path)
                 const graphDist = getGraphDistance(nodeA.id, nodeB.id);
-                const repulsionFactor = REPULSION_STRENGTH / (dist * dist) * (graphDist + 1); // Higher repulsion for greater graph distance
+                const repulsionFactor = REPULSION_STRENGTH / (effectiveDist * effectiveDist) * (graphDist + 1); // Higher repulsion for greater graph distance
 
                 const fx = (dx / dist) * repulsionFactor;
                 const fy = (dy / dist) * repulsionFactor;
@@ -118,8 +120,9 @@ function calculateForces() {
         const dx = nodeB.x - nodeA.x;
         const dy = nodeB.y - nodeA.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
+        const effectiveDist = Math.max(dist, MIN_FORCE_DISTANCE); // Use effectiveDist to prevent extreme values
 
-        const displacement = dist - EDGE_LENGTH;
+        const displacement = effectiveDist - EDGE_LENGTH; // Calculate displacement based on effective distance
         const attraction = ATTRACTION_STRENGTH * displacement;
 
         const fx = (dx / dist) * attraction;
@@ -248,6 +251,7 @@ function draw() {
         ctx.moveTo(nodeA.x, nodeA.y);
         ctx.lineTo(nodeB.x, nodeB.y);
         ctx.strokeStyle = config.appearance.edgeColor;
+        ctx.lineWidth = config.appearance.edgeWidth; // Apply edge width
         ctx.stroke();
     });
 
@@ -385,3 +389,97 @@ canvas.addEventListener('mouseleave', () => {
         draw(); // Redraw to remove hover effect
     }
 });
+
+// Settings Panel functionality
+const settingsButton = document.getElementById('settingsButton');
+const settingsPanel = document.getElementById('settingsPanel');
+const closeSettingsButton = document.getElementById('closeSettings');
+const slidersContainer = document.getElementById('slidersContainer');
+
+settingsButton.addEventListener('click', (event) => {
+    settingsPanel.classList.remove('hidden');
+    populateSliders(); // Populate sliders when panel opens
+    event.stopPropagation(); // Prevent click from propagating to canvas
+});
+
+closeSettingsButton.addEventListener('click', () => {
+    settingsPanel.classList.add('hidden');
+});
+
+// Close settings panel when clicking outside of it
+canvas.addEventListener('click', (event) => {
+    if (!settingsPanel.classList.contains('hidden')) {
+        settingsPanel.classList.add('hidden');
+    }
+});
+
+function populateSliders() {
+    slidersContainer.innerHTML = ''; // Clear existing sliders
+
+    // Define which config values to expose as sliders
+    const sliderConfigs = [
+        { path: 'tree.maxDepth', label: 'Max Depth', min: 1, max: 10, step: 1 },
+        { path: 'tree.branchingFactor', label: 'Branching Factor', min: 1, max: 5, step: 1 },
+        { path: 'tree.radialSpacing', label: 'Radial Spacing', min: 10, max: 200, step: 5 },
+        { path: 'forces.edgeLength', label: 'Edge Length', min: 10, max: 200, step: 5 },
+        { path: 'forces.repulsionStrength', label: 'Repulsion Strength', min: 100, max: 5000, step: 100 },
+        { path: 'forces.attractionStrength', label: 'Attraction Strength', min: 0.001, max: 0.1, step: 0.001 },
+        { path: 'forces.dampingFactor', label: 'Damping Factor', min: 0.5, max: 0.99, step: 0.01 },
+        { path: 'forces.minForceDistance', label: 'Min Force Distance', min: 1, max: 100, step: 1 },
+        { path: 'appearance.nodeRadius', label: 'Node Radius', min: 1, max: 20, step: 1 },
+        { path: 'appearance.hoverNodeRadius', label: 'Hover Node Radius', min: 5, max: 30, step: 1 },
+        { path: 'appearance.edgeWidth', label: 'Edge Width', min: 1, max: 10, step: 0.5 }
+    ];
+
+    sliderConfigs.forEach(sConfig => {
+        const value = getNestedConfig(config, sConfig.path);
+        const sliderGroup = document.createElement('div');
+        sliderGroup.classList.add('slider-group');
+
+        const label = document.createElement('label');
+        label.textContent = `${sConfig.label}: ${value}`;
+        label.setAttribute('for', sConfig.path.replace(/\./g, '-')); // Create a valid ID
+
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.id = sConfig.path.replace(/\./g, '-');
+        slider.min = sConfig.min;
+        slider.max = sConfig.max;
+        slider.step = sConfig.step;
+        slider.value = value;
+
+        slider.addEventListener('input', (e) => {
+            const newValue = parseFloat(e.target.value);
+            setNestedConfig(config, sConfig.path, newValue);
+            label.textContent = `${sConfig.label}: ${newValue}`;
+            // Recreate tree and re-initialize layout if maxDepth or branchingFactor changes
+            if (sConfig.path === 'tree.maxDepth' || sConfig.path === 'tree.branchingFactor') {
+                nodes = [];
+                edges = [];
+                createTree(config.tree.maxDepth);
+                initializeConcentricLayout();
+            }
+            // For other changes, just redraw will suffice as forces will re-calculate
+            draw();
+        });
+
+        sliderGroup.appendChild(label);
+        sliderGroup.appendChild(slider);
+        slidersContainer.appendChild(sliderGroup);
+    });
+}
+
+// Helper function to get nested config value
+function getNestedConfig(obj, path) {
+    return path.split('.').reduce((acc, key) => acc && acc[key], obj);
+}
+
+// Helper function to set nested config value
+function setNestedConfig(obj, path, value) {
+    const pathParts = path.split('.');
+    let current = obj;
+    for (let i = 0; i < pathParts.length - 1; i++) {
+        current = current[pathParts[i]];
+    }
+    current[pathParts[pathParts.length - 1]] = value;
+}
